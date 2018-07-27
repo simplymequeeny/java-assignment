@@ -22,13 +22,11 @@
 	  		<div class="form-group col-md-4">
 		      <label for="inputOrigin">Origin</label>
 		      <select id="inputOrigin" class="form-control">
-		        <option selected>Choose...</option>
 		      </select>
 		    </div>
 	        <div class="form-group col-md-4">
 		      <label for="inputDestination">Destination</label>
 		      <select id="inputDestination" class="form-control">
-		        <option selected>Choose...</option>
 		      </select>
 		    </div>
   		</div>
@@ -74,6 +72,12 @@
 			});
 		});
 		
+		function rePopulateSelect() {
+			$('select').children('option:not(:first)').remove();	
+			populateSelect('inputOrigin');
+			populateSelect('inputDestination');
+		}
+		
 		function displayDistance() {
 			var originId = $('#inputOrigin').val();
 			var destinationId = $('#inputDestination').val();
@@ -99,9 +103,12 @@
 				url : window.location + "api/cities",
 				success: function(result){
 					var selectElement = document.getElementById(elementId);
+					var option = document.createElement("option");
+					option.text = 'Choose ...';
+					selectElement.add(option);
 					
 					$.each(result, function(i, city){
-						var option = document.createElement("option");
+						option = document.createElement("option");	
 						option.text = city.name;
 						option.value = city.id;
 						selectElement.add(option);
@@ -202,6 +209,7 @@
 		}
 		
 		function reloadTable() {
+			rePopulateSelect();
 			$( "#cityTable" ).remove();
 			displayDataTable();
 		}
@@ -226,20 +234,20 @@
 			if (id == '') {
 				$.ajax({
 					type : "POST",
-					dataType: 'json',
+					dataType: 'text',
 					contentType: 'application/json',
 					url : window.location + "api/cities",
 					data: JSON.stringify(formData),
 					success: function(data, textStatus, jQxhr){
+						$('#exampleModalCenter').modal('toggle');
 						reloadTable();
 						alert('city successfully added');
-						$('#exampleModalCenter').modal({show:false});
 					},
 					error: function(jqXhr, textStatus, errorThrown) {
+						$('#exampleModalCenter').modal('toggle');
 						reloadTable();
-						$('#exampleModalCenter').modal({show:false});
-						//alert("ERROR: ", errorThrown);
-						//console.log("ERROR: ", errorThrown, textStatus);
+						alert("ERROR: ", errorThrown);
+						console.log("ERROR: ", errorThrown, textStatus);
 					}
 				});		
 			}
@@ -248,20 +256,20 @@
 				
 				$.ajax({
 					type : "PUT",
-					dataType: 'json',
+					dataType: 'text',
 					contentType: 'application/json',
 					url : window.location + "api/cities/" + id,
 					data: JSON.stringify(formData),
 					success: function(data, textStatus, jQxhr){
+						$('#exampleModalCenter').modal('toggle');
 						reloadTable();
 						alert('city successfully updated');
-						$('#exampleModalCenter').modal({show:false});
 					},
 					error: function(jqXhr, textStatus, errorThrown) {
+						$('#exampleModalCenter').modal('toggle');
 						reloadTable();
-						$('#exampleModalCenter').modal({show:false});
-						//alert("ERROR: ", errorThrown);
-						//console.log("ERROR: ", errorThrown, textStatus);
+						alert("ERROR: ", errorThrown);
+						console.log("ERROR: ", errorThrown, textStatus);
 					}
 				});	
 			}
