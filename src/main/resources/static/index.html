@@ -1,0 +1,311 @@
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>INDEX</title>
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width" />
+<base href="/" />
+<link rel="stylesheet" type="text/css"
+	href="/webjars/bootstrap/css/bootstrap.min.css" />
+<script type="text/javascript" src="/webjars/jquery/jquery.min.js"></script>
+<script type="text/javascript"
+	src="/webjars/bootstrap/js/bootstrap.min.js"></script>
+<link rel="stylesheet"
+	href="/webjars/font-awesome/css/font-awesome.min.css"></link>
+</head>
+<body>
+</body>
+<div class="container">	
+	<section>
+  		<div class="form-row">
+	  		<div class="form-group col-md-4">
+		      <label for="inputOrigin">Origin</label>
+		      <select id="inputOrigin" class="form-control">
+		        <option selected>Choose...</option>
+		      </select>
+		    </div>
+	        <div class="form-group col-md-4">
+		      <label for="inputDestination">Destination</label>
+		      <select id="inputDestination" class="form-control">
+		        <option selected>Choose...</option>
+		      </select>
+		    </div>
+  		</div>
+  		<br>
+  		<button type="button" id="calculateBtn" class="btn btn-primary">Calculate Distance</button>
+  		<br>
+  		<span id="distanceResult"></span>
+  		<br>
+	</section>
+  	
+	<div class="card">
+	  <div class="card-body">
+	    <h5 class="card-title">CITIES</h5>
+	    <button type="button" class="btn btn-info btn-sm pull-right addBtn" 
+	    		data-toggle="modal">ADD</button>
+	    
+		<span id="dynaTable"></span>
+	  </div>
+	</div>
+	
+	<script>
+		$( document ).ready(function() {
+			populateSelect('inputOrigin');
+			populateSelect('inputDestination');
+			
+			$('#calculateBtn').on('click', function() {
+				displayDistance();
+			});
+			
+			displayDataTable();
+			
+			$('.addBtn').on('click',function(){
+				$('#cityId').val('');
+				$('#cityName').val('');
+				$('#cityLatitude').val('');
+				$('#cityLongitude').val('');
+				
+				$('#exampleModalCenter').modal({show:true});
+			});
+			
+			$('#saveBtn').on('click', function() {
+				saveChanges();
+			});
+		});
+		
+		function displayDistance() {
+			var originId = $('#inputOrigin').val();
+			var destinationId = $('#inputDestination').val();
+			
+			$.ajax({
+				type : "GET",
+				url : window.location + "api/cities/calculate-distance/" + 
+						originId + "/" + destinationId,
+				success: function(result){
+					document.getElementById('distanceResult').innerHTML = '<b>The distance is ' +
+							result + ' miles </b>';
+				},
+				error : function(e) {
+					alert("ERROR: ", e);
+					console.log("ERROR: ", e);
+				}
+			});	
+		}
+		
+		function populateSelect(elementId) {
+			$.ajax({
+				type : "GET",
+				url : window.location + "api/cities",
+				success: function(result){
+					var selectElement = document.getElementById(elementId);
+					
+					$.each(result, function(i, city){
+						var option = document.createElement("option");
+						option.text = city.name;
+						option.value = city.id;
+						selectElement.add(option);
+			        });
+				},
+				error : function(e) {
+					alert("ERROR: ", e);
+					console.log("ERROR: ", e);
+				}
+			});	
+		}
+		
+		function displayDataTable() {
+			var html = '<table class="table table-striped" id="cityTable">' +
+				'<thead class="thead-dark">' +
+				'<tr>' +
+				'<th scope="col">ID</th>' +
+				'<th scope="col">NAME</th>' +
+				'<th scope="col">LATITUDE</th>' +
+				'<th scope="col">LONGITUDE</th>' +
+				'<th scope="col">ACTIONS</th>' +
+				'</tr>' +
+				'</thead>' +
+				'<tbody>';
+				
+			$.ajax({
+				type : "GET",
+				url : window.location + "api/cities",
+				success: function(result){
+					$.each(result, function(i, city){
+						
+						var cityRow = '<tr>' +
+											'<td>' + city.id + '</td>' +
+											'<td>' + city.name + '</td>' +
+											'<td>' + city.latitude + '</td>' +
+											'<td>' + city.longitude + '</td>' +
+										  	'<td id="actions_' + city.id + '"> </td>' +
+										  '</tr>';
+						
+						html += cityRow;
+			        });
+					
+					html += '</tbody></table>';
+					
+					document.getElementById("dynaTable").innerHTML = html;
+					
+					$.each(result, function(i, city){ 
+						var actionId = "actions_" + city.id;
+						addButton(actionId, city.id, "Delete", true);
+						addButton(actionId, city.id, "Edit", false);
+					});
+				},
+				error : function(e) {
+					alert("ERROR: ", e);
+					console.log("ERROR: ", e);
+				}
+			});	
+		}
+		
+		function addButton(parentId, cityId, name, isDeleteBtn) {
+			var element = document.createElement("input");
+			element.type = "button";
+			element.value = name;
+			element.onclick = function() {
+				if (isDeleteBtn) deleteOne(cityId);
+				else {
+					$.ajax({
+						type : "GET",
+						url : window.location + "api/cities/" + cityId,
+						success: function(result){
+							edit(result);
+						},
+						error : function(e) {
+							alert("ERROR: ", e);
+							console.log("ERROR: ", e);
+						}
+					});
+				}
+			}
+			
+			var actionCell = document.getElementById(parentId);
+			actionCell.appendChild(element);
+		}
+		
+		function deleteOne(id) {
+			$.ajax({
+				type : "DELETE",
+				url : window.location + "api/cities/" + id,
+				success: function(result){
+					alert('city successfully deleted');
+					reloadTable();
+				},
+				error : function(e) {
+					alert("ERROR: ", e);
+					console.log("ERROR: ", e);
+				}
+			});								
+		}
+		
+		function reloadTable() {
+			$( "#cityTable" ).remove();
+			displayDataTable();
+		}
+		
+		function edit(city) {
+			$('#cityId').val(city.id);
+			$('#cityName').val(city.name);
+			$('#cityLatitude').val(city.latitude);
+			$('#cityLongitude').val(city.longitude);
+			
+			$('#exampleModalCenter').modal({show:true});
+		}
+		
+		function saveChanges() {
+			var id = $('#cityId').val();
+			var formData = { 
+					"name": $("#cityName").val(), 
+					"latitude": $("#cityLatitude").val(), 
+					"longitude": $("#cityLongitude").val()
+				};
+			
+			if (id == '') {
+				$.ajax({
+					type : "POST",
+					dataType: 'json',
+					contentType: 'application/json',
+					url : window.location + "api/cities",
+					data: JSON.stringify(formData),
+					success: function(data, textStatus, jQxhr){
+						reloadTable();
+						alert('city successfully added');
+						$('#exampleModalCenter').modal({show:false});
+					},
+					error: function(jqXhr, textStatus, errorThrown) {
+						reloadTable();
+						$('#exampleModalCenter').modal({show:false});
+						//alert("ERROR: ", errorThrown);
+						//console.log("ERROR: ", errorThrown, textStatus);
+					}
+				});		
+			}
+			else {
+				formData.id = id;
+				
+				$.ajax({
+					type : "PUT",
+					dataType: 'json',
+					contentType: 'application/json',
+					url : window.location + "api/cities/" + id,
+					data: JSON.stringify(formData),
+					success: function(data, textStatus, jQxhr){
+						reloadTable();
+						alert('city successfully updated');
+						$('#exampleModalCenter').modal({show:false});
+					},
+					error: function(jqXhr, textStatus, errorThrown) {
+						reloadTable();
+						$('#exampleModalCenter').modal({show:false});
+						//alert("ERROR: ", errorThrown);
+						//console.log("ERROR: ", errorThrown, textStatus);
+					}
+				});	
+			}
+		}
+	</script>  
+		
+	<!-- Modal -->
+	<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" id="exampleModalCenterTitle">City</h5>
+	      </div>
+	      <div class="modal-body">
+	        <form>
+	        	<input type="hidden" id="cityId">
+	        	
+	        	<div class="form-group row">
+				    <label for="cityName" class="col-sm-2 col-form-label">Name</label>
+				    <div class="col-sm-10">
+				      <input type="text" class="form-control" id="cityName" placeholder="Name">
+				    </div>
+				</div>
+				<div class="form-group row">
+				    <label for="cityLatitude" class="col-sm-2 col-form-label">Latitude</label>
+				    <div class="col-sm-10">
+				      <input type="number" class="form-control" id="cityLatitude" placeholder="Latitude">
+				    </div>
+				</div>
+				<div class="form-group row">
+				    <label for="cityLongitude" class="col-sm-2 col-form-label">Latitude</label>
+				    <div class="col-sm-10">
+				      <input type="number" class="form-control" id="cityLongitude" placeholder="Longitude">
+				    </div>
+				</div>
+	        </form>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+	        <button type="button" class="btn btn-primary" id="saveBtn">Save changes</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+</div>
+</body>
+</html>
