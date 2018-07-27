@@ -32,12 +32,12 @@ public class CityServiceTests {
 	
 	@Test(expected = CityNotFoundException.class)
 	public void shouldThrowCityNotFoundExceptionWhenCityIdDoesNotExists() throws CityNotFoundException {
-		service.findOne(333);
+		service.findOne(333l);
 	}
 	
 	@Test
 	public void shouldGetParis() throws CityNotFoundException {
-		City paris = service.findOne(9);
+		City paris = service.findOne(9l);
 		
 		Assert.notNull(paris, "object is null");
 		Assert.isTrue(paris.getId().equals(9), "Paris ID is not 9");
@@ -48,17 +48,17 @@ public class CityServiceTests {
 	
 	@Test(expected = CityNotFoundException.class)
 	public void shouldThrowCityNotFoundExceptionWhen1stParameterIdDoesNotExists() throws CityNotFoundException {
-		service.calculateDistance(111, 1);
+		service.calculateDistance(111l, 1l);
 	}
 
 	@Test(expected = CityNotFoundException.class)
 	public void shouldThrowCityNotFoundExceptionWhen2ndParameterIdDoesNotExists() throws CityNotFoundException {
-		service.calculateDistance(1, 222);
+		service.calculateDistance(1l, 222l);
 	}
 	
 	@Test
 	public void shouldCalculateDistanceBetweenTokyoAndLondonInMiles() throws CityNotFoundException {
-		Double distance = service.calculateDistance(1, 2);
+		Double distance = service.calculateDistance(1l, 2l);
 		Assert.isTrue(Distance.round(distance, 2) == 5939.69, "distance is not correct");
 	}
 }

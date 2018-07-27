@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -45,6 +46,23 @@ public class CityControllerTests {
 		Assert.notNull(mockMvc, "mockMVC is null");
 	}
 
+	@Test
+	public void shouldReturnBadRequestWhenCityIdDoesNotExists() throws Exception {
+		mockMvc.perform(get("/api/cities/111"))
+				.andExpect(status().isBadRequest());
+	}
+	
+	@Test
+	public void shouldGetChicagoDetails() throws Exception {
+		mockMvc.perform(get("/api/cities/6"))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+				.andExpect(jsonPath("$.id", is(6)))
+				.andExpect(jsonPath("$.name", is("Chicago")))
+				.andExpect(jsonPath("$.latitude", is(41.85)))
+				.andExpect(jsonPath("$.longitude", is(-87.65)));
+	}
+	
 	@Ignore
 	public void shouldRetrieveAllCities() throws Exception {
 		mockMvc.perform(get("/api/cities"))
@@ -54,7 +72,7 @@ public class CityControllerTests {
 	}
 	
 	@Test
-	public void shouldReturn404StatusWhenCityIdDoesNotExists() throws Exception {
+	public void shouldReturnBadRequestStatusWhenCalculatingDistanceAndCityIdDoesNotExists() throws Exception {
 		mockMvc.perform(get("/api/cities/calculate-distance/111/2"))
 				.andExpect(status().isBadRequest());
 	}
@@ -72,7 +90,7 @@ public class CityControllerTests {
 	
 	@Test
 	public void shouldAddWaterlooToTheListOfCities() throws Exception {
-		City waterloo = new City(16, "Waterloo", 43.466667, -80.516667);
+		City waterloo = new City(16l, "Waterloo", 43.466667, -80.516667);
 		String json = json(waterloo);
 		
 		mockMvc.perform(post("/api/cities")
@@ -94,7 +112,7 @@ public class CityControllerTests {
 		mockMvc.perform(delete("/api/cities/15"))
 				.andExpect(status().isNoContent());
 		
-		Assert.isTrue(!cityRepository.existsById(15), "Miami city was not deleted");
+		Assert.isTrue(!cityRepository.existsById(15l), "Miami city was not deleted");
 	}
 	
 	@Test 
@@ -105,7 +123,7 @@ public class CityControllerTests {
 	
 	@Test
 	public void shouldPersistModifiedValuesForMilan() throws Exception {
-		City city = cityRepository.findById(8).get();
+		City city = cityRepository.findById(8l).get();
 		
 		city.setName("Temp City");
 		city.setLatitude(-22.222);
